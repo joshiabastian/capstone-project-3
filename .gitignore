@@ -16,7 +16,6 @@ airflow/airflow.cfg
 
 # Dummy data files
 *.csv
-*.json
 *.parquet
 
 # Docker & system
@@ -38,3 +37,4 @@ Thumbs.db
 # BigQuery credentials (jangan pernah commit!)
 credentials.json
 key.json
+airflow/gcp/
