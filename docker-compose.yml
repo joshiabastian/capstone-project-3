@@ -1,0 +1,128 @@
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.8.1
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow/airflow
+    AIRFLOW__CORE__FERNET_KEY: ""
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth"
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    # Koneksi ke Postgres library (source data)
+    AIRFLOW_CONN_POSTGRES_LIBRARY: postgresql+psycopg2://library_user:library_pass@postgres-library:5432/library_db
+    # GCP credentials untuk BigQuery
+    GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/gcp/service-account.json
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/logs:/opt/airflow/logs
+    - ./airflow/plugins:/opt/airflow/plugins
+    - ./airflow/gcp:/opt/airflow/gcp
+  depends_on:
+    postgres-airflow:
+      condition: service_healthy
+  networks:
+    - capstone_network
+
+services:
+  # Postgres untuk Library (source data)
+  postgres-library:
+    image: postgres:15
+    container_name: postgres-library
+    environment:
+      POSTGRES_DB: library_db
+      POSTGRES_USER: library_user
+      POSTGRES_PASSWORD: library_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_library_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "library_user", "-d", "library_db"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - capstone_network
+
+  # Postgres untuk Airflow (metadata)
+  postgres-airflow:
+    image: postgres:15
+    container_name: postgres-airflow
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+    ports:
+      - "5434:5432" # port 5434 di host
+    volumes:
+      - postgres_airflow_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - capstone_network
+
+  # Airflow Init
+  airflow-init:
+    <<: *airflow-common
+    container_name: airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db init &&
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com
+    environment:
+      <<: *airflow-common-env
+    restart: on-failure
+
+  # Airflow Webserver
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow-webserver
+    command: webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+  # Airflow Scheduler
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow-scheduler
+    command: scheduler
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+# Volumes
+volumes:
+  postgres_library_data:
+  postgres_airflow_data:
+
+# Network
+networks:
+  capstone_network:
+    driver: bridge

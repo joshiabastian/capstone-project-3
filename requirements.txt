@@ -1,0 +1,6 @@
+psycopg2-binary
+faker
+google-cloud-bigquery
+google-cloud-storage
+pandas
+db-dtypes

@@ -34,7 +34,7 @@ Thumbs.db
 # Jupyter notebooks checkpoints
 .ipynb_checkpoints/
 
-# BigQuery credentials (jangan pernah commit!)
+# BigQuery credentials
 credentials.json
 key.json
 airflow/gcp/
