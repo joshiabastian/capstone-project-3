@@ -1,0 +1,40 @@
+# Python cache & virtual env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv/
+venv/
+ENV/
+
+# Airflow related
+airflow/logs/
+airflow/tmp/
+airflow/airflow.db
+airflow/airflow.cfg
+
+# Dummy data files
+*.csv
+*.json
+*.parquet
+
+# Docker & system
+*.pid
+*.log
+*.db
+*.sqlite
+*.sql
+*.tar
+*.gz
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# BigQuery credentials (jangan pernah commit!)
+credentials.json
+key.json
