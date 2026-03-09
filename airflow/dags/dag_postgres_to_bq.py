@@ -90,7 +90,7 @@ BQ_SCHEMAS = {
 }
 
 
-# OPERATOR FUNCTION — Extract semua tabel dari Postgres (1 fungsi, 1 task)
+# OPERATOR FUNCTION — Extract semua tabel dari Postgres
 
 
 def extract_all_tables(**context):
