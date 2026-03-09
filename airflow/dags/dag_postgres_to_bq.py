@@ -120,7 +120,7 @@ def extract_all_tables(**context):
     context["ti"].xcom_push(key="extracted_data", value=extracted)
 
 
-# LOAD FUNCTIONS — Load setiap tabel ke BigQuery (task terpisah per tabel)
+# LOAD FUNCTIONS — Load setiap tabel ke BigQuery
 
 
 def load_table_to_bq(table_name: str, **context):
