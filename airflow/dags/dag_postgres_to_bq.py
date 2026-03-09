@@ -196,7 +196,7 @@ def load_table_to_bq(table_name: str, **context):
 
     # Load dataframe ke BigQuery
     job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
-    job.result()  # tunggu sampai selesai
+    job.result()
 
     print(f"✅ Berhasil load {len(df)} rows ke {table_id}")
 
