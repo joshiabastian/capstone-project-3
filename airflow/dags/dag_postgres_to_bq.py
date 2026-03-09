@@ -83,7 +83,7 @@ BQ_SCHEMAS = {
         bigquery.SchemaField("fine_id", "INTEGER"),
         bigquery.SchemaField("loan_id", "INTEGER"),
         bigquery.SchemaField("member_id", "INTEGER"),
-        bigquery.SchemaField("fine_amount", "NUMERIC"),
+        bigquery.SchemaField("fine_amount", "FLOAT64"),
         bigquery.SchemaField("is_paid", "BOOLEAN"),
         bigquery.SchemaField("created_at", "TIMESTAMP"),
     ],
@@ -141,8 +141,39 @@ def load_table_to_bq(table_name: str, **context):
     df = pd.read_json(extracted[table_name])
 
     if df.empty:
-        print(f"⚠️  Data {table_name} kosong untuk H-1, skip")
+        print(f"Data {table_name} kosong untuk H-1, skip")
         return
+
+    date_cols = {"loans": ["loan_date", "due_date", "return_date"]}
+    int_cols = {
+        "loans": ["loan_id", "member_id", "book_id"],
+        "fines": ["fine_id", "loan_id", "member_id"],
+    }
+    bool_cols = {"fines": ["is_paid"]}
+    numeric_cols = {"fines": ["fine_amount"]}
+
+    if table_name in date_cols:
+        for col in date_cols[table_name]:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
+
+    if table_name in int_cols:
+        for col in int_cols[table_name]:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
+
+    if table_name in bool_cols:
+        for col in bool_cols[table_name]:
+            if col in df.columns:
+                df[col] = df[col].astype(bool)
+
+    if table_name in numeric_cols:
+        for col in numeric_cols[table_name]:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
+
+    if "created_at" in df.columns:
+        df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
 
     print(f"📤 Loading {len(df)} rows dari {table_name} ke BigQuery...")
 
@@ -161,7 +192,6 @@ def load_table_to_bq(table_name: str, **context):
     job_config = bigquery.LoadJobConfig(
         schema=BQ_SCHEMAS[table_name],
         write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
-        source_format=bigquery.SourceFormat.PARQUET,
     )
 
     # Load dataframe ke BigQuery
