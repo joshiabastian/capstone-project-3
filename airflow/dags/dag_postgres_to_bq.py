@@ -203,7 +203,6 @@ def load_table_to_bq(table_name: str, **context):
     print(f"✅ Berhasil load {len(df)} rows ke {table_id}")
 
 
-
 # DAG DEFINITION
 
 
@@ -234,6 +233,6 @@ with DAG(
         )
         load_tasks.append(t_load)
 
-    # ─── Task Dependencies ────────────────────────────────────────────────────
+    # Task Dependencies
     # Extract dulu, baru semua load task jalan paralel
     t_extract >> load_tasks
