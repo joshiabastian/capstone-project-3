@@ -222,7 +222,7 @@ with DAG(
         provide_context=True,
     )
 
-    # ─── Task 2: Load per tabel ke BigQuery (task terpisah per tabel) ─────────
+    # Task 2: Load per tabel ke BigQuery (task terpisah per tabel)
     load_tasks = []
     for table in TABLES:
         t_load = PythonOperator(
