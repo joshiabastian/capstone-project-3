@@ -203,9 +203,9 @@ def load_table_to_bq(table_name: str, **context):
     print(f"✅ Berhasil load {len(df)} rows ke {table_id}")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+
 # DAG DEFINITION
-# ══════════════════════════════════════════════════════════════════════════════
+
 
 with DAG(
     dag_id="dag_postgres_to_bq",
