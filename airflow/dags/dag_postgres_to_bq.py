@@ -6,7 +6,7 @@ from google.cloud import bigquery
 import pandas as pd
 import os
 
-# Config
+# ─── Config ───────────────────────────────────────────────────────────────────
 POSTGRES_CONN_ID = "postgres_library"
 GCP_PROJECT_ID = "jcdeah-008"
 BQ_DATASET = "yosia_perpustakaan_capstone3"
@@ -14,7 +14,7 @@ GCP_CREDENTIALS = "/opt/airflow/gcp/service-account.json"
 
 TABLES = ["members", "books", "loans", "fines"]
 
-# Default Args
+# ─── Default Args ─────────────────────────────────────────────────────────────
 default_args = {
     "owner": "capstone3",
     "retries": 1,
@@ -22,7 +22,9 @@ default_args = {
     "start_date": datetime(2025, 3, 6),
 }
 
+# ══════════════════════════════════════════════════════════════════════════════
 # HELPER FUNCTIONS
+# ══════════════════════════════════════════════════════════════════════════════
 
 
 def get_bq_client() -> bigquery.Client:
@@ -51,7 +53,7 @@ def ensure_table_exists(
         print(f"✅ Tabel {table_id} berhasil dibuat")
 
 
-# BigQuery Schema per tabel
+# ─── BigQuery Schema per tabel ────────────────────────────────────────────────
 BQ_SCHEMAS = {
     "members": [
         bigquery.SchemaField("member_id", "INTEGER"),
@@ -90,7 +92,9 @@ BQ_SCHEMAS = {
 }
 
 
-# OPERATOR FUNCTION — Extract semua tabel dari Postgres
+# ══════════════════════════════════════════════════════════════════════════════
+# OPERATOR FUNCTION — Extract semua tabel dari Postgres (1 fungsi, 1 task)
+# ══════════════════════════════════════════════════════════════════════════════
 
 
 def extract_all_tables(**context):
@@ -120,7 +124,9 @@ def extract_all_tables(**context):
     context["ti"].xcom_push(key="extracted_data", value=extracted)
 
 
-# LOAD FUNCTIONS — Load setiap tabel ke BigQuery
+# ══════════════════════════════════════════════════════════════════════════════
+# LOAD FUNCTIONS — Load setiap tabel ke BigQuery (task terpisah per tabel)
+# ══════════════════════════════════════════════════════════════════════════════
 
 
 def load_table_to_bq(table_name: str, **context):
@@ -144,6 +150,7 @@ def load_table_to_bq(table_name: str, **context):
         print(f"Data {table_name} kosong untuk H-1, skip")
         return
 
+    # Fix tipe data per tabel
     date_cols = {"loans": ["loan_date", "due_date", "return_date"]}
     int_cols = {
         "loans": ["loan_id", "member_id", "book_id"],
@@ -196,13 +203,14 @@ def load_table_to_bq(table_name: str, **context):
 
     # Load dataframe ke BigQuery
     job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
-    job.result()
+    job.result()  # tunggu sampai selesai
 
     print(f"✅ Berhasil load {len(df)} rows ke {table_id}")
 
 
+# ══════════════════════════════════════════════════════════════════════════════
 # DAG DEFINITION
-
+# ══════════════════════════════════════════════════════════════════════════════
 
 with DAG(
     dag_id="dag_postgres_to_bq",
@@ -213,14 +221,14 @@ with DAG(
     tags=["capstone3", "bigquery", "ingest"],
 ) as dag:
 
-    # Task 1: Extract semua tabel (1 task)
+    # ─── Task 1: Extract semua tabel (1 task) ─────────────────────────────────
     t_extract = PythonOperator(
         task_id="extract_all_tables",
         python_callable=extract_all_tables,
         provide_context=True,
     )
 
-    # Task 2: Load per tabel ke BigQuery (task terpisah per tabel)
+    # ─── Task 2: Load per tabel ke BigQuery (task terpisah per tabel) ─────────
     load_tasks = []
     for table in TABLES:
         t_load = PythonOperator(
@@ -231,6 +239,6 @@ with DAG(
         )
         load_tasks.append(t_load)
 
-    # Task Dependencies
+    # ─── Task Dependencies ────────────────────────────────────────────────────
     # Extract dulu, baru semua load task jalan paralel
     t_extract >> load_tasks
