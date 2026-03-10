@@ -215,7 +215,7 @@ with DAG(
     tags=["capstone3", "bigquery", "ingest"],
 ) as dag:
 
-    # ─── Task 1: Extract semua tabel (1 task) ─────────────────────────────────
+    # Task 1: Extract semua tabel (1 task)
     t_extract = PythonOperator(
         task_id="extract_all_tables",
         python_callable=extract_all_tables,
