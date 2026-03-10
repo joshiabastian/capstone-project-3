@@ -52,7 +52,7 @@ def ensure_table_exists(
         print(f"✅ Tabel {table_id} berhasil dibuat")
 
 
-# ─── BigQuery Schema per tabel ────────────────────────────────────────────────
+# BigQuery Schema per tabel
 BQ_SCHEMAS = {
     "members": [
         bigquery.SchemaField("member_id", "INTEGER"),
