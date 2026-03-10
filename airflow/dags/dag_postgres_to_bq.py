@@ -14,7 +14,7 @@ GCP_CREDENTIALS = "/opt/airflow/gcp/service-account.json"
 
 TABLES = ["members", "books", "loans", "fines"]
 
-# ─── Default Args ─────────────────────────────────────────────────────────────
+# Default Args
 default_args = {
     "owner": "capstone3",
     "retries": 1,
