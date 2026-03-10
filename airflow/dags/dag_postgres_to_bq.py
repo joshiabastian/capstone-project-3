@@ -6,7 +6,7 @@ from google.cloud import bigquery
 import pandas as pd
 import os
 
-# ─── Config ───────────────────────────────────────────────────────────────────
+# Config
 POSTGRES_CONN_ID = "postgres_library"
 GCP_PROJECT_ID = "jcdeah-008"
 BQ_DATASET = "yosia_perpustakaan_capstone3"
